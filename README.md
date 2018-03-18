@@ -10,7 +10,7 @@ for me to use.
   your separate password in it.
 
 - Alarms: A siren will play if a user enters an incorrect password. It must
-  reside in ~/slock.
+  reside in ~/.config/slock/
 
 - Automatic Shutdown: Your machine will immediately shutdown if:
 
