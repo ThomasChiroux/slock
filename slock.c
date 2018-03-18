@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <syslog.h>
+#include <time.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -33,11 +35,12 @@
 #define POWEROFF 1
 #define USBOFF 1
 #define STRICT_USBOFF 0
-#define TWILIO_SEND 1
+#define TWILIO_SEND 0
 #define WEBCAM_SHOT 1
 #define IMGUR_UPLOAD 0
-#define PLAY_AUDIO 1
+#define PLAY_AUDIO 0
 #define TRANSPARENT 1
+#define CAPTURE_DIR ".failed_unlock_captures"
 
 char *g_pw = NULL;
 int lock_tries = 0;
@@ -262,12 +265,19 @@ webcam_shot(int async) {
 #if WEBCAM_SHOT
   char cmd[CMD_LENGTH];
 
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+
+  printf("now: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
   int r = snprintf(
     cmd,
     CMD_LENGTH,
     "ffmpeg -y -loglevel quiet -f video4linux2 -i /dev/video0"
-    " -frames:v 1 -f image2 %s/slock.jpg%s",
+    " -frames:v 1 -f image2 %s/%s/%d-%d-%dT%d:%d:%d_slock.jpg%s",
     getenv("HOME"),
+    CAPTURE_DIR,
+    tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
     async ? " &" : ""
   );
 
@@ -559,7 +569,7 @@ readpw(Display *dpy, const char *pws)
         if (running) {
           XBell(dpy, 100);
           lock_tries++;
-
+          syslog(LOG_WARNING, "Failed unlock attempt");
           // Poweroff if there are more than 5 bad attempts.
           if (lock_tries > 5) {
             // Disable alt+sysrq and ctrl+alt+backspace
@@ -978,7 +988,7 @@ main(int argc, char **argv) {
   }
 
   XSync(dpy, False);
-
+  syslog(LOG_NOTICE, "Locked");
   // Did we actually manage to lock something?
   if (nlocks == 0) { // nothing to protect
     free(locks);
@@ -1000,5 +1010,6 @@ main(int argc, char **argv) {
   free(locks);
   XCloseDisplay(dpy);
 
+  syslog(LOG_NOTICE, "Unlocked");
   return 0;
 }
