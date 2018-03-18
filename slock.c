@@ -614,9 +614,9 @@ readpw(Display *dpy, const char *pws)
           // Play a siren if there are more than 4 bad
           // passwords, a beep if a correct password.
           if (lock_tries > ALARM_ATTEMPTS) {
-            play_alarm(0);
+            play_alarm(1);
           } else {
-            play_beep(0);
+            play_beep(1);
           }
         }
 
