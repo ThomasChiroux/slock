@@ -38,8 +38,10 @@
 #define TWILIO_SEND 0
 #define WEBCAM_SHOT 1
 #define IMGUR_UPLOAD 0
-#define PLAY_AUDIO 0
+#define PLAY_AUDIO 1
 #define TRANSPARENT 1
+#define MAX_ATTEMPTS 5
+#define ALARM_ATTEMPTS 4
 #define CAPTURE_DIR ".failed_unlock_captures"
 
 char *g_pw = NULL;
@@ -274,7 +276,7 @@ webcam_shot(int async) {
     cmd,
     CMD_LENGTH,
     "ffmpeg -y -loglevel quiet -f video4linux2 -i /dev/video0"
-    " -frames:v 1 -f image2 %s/%s/%d-%d-%dT%d:%d:%d_slock.jpg%s",
+    " -frames:v 1 -f image2 %s/%s/%04d-%02d-%02dT%02d:%02d:%02d_slock.jpg%s",
     getenv("HOME"),
     CAPTURE_DIR,
     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
@@ -571,7 +573,7 @@ readpw(Display *dpy, const char *pws)
           lock_tries++;
           syslog(LOG_WARNING, "Failed unlock attempt");
           // Poweroff if there are more than 5 bad attempts.
-          if (lock_tries > 5) {
+          if (lock_tries > MAX_ATTEMPTS) {
             // Disable alt+sysrq and ctrl+alt+backspace
             disable_kill();
 
@@ -609,9 +611,9 @@ readpw(Display *dpy, const char *pws)
             twilio_send("Bad screenlock password.", NULL, 1);
           }
 
-          // Play a siren if there are more than 2 bad
+          // Play a siren if there are more than 4 bad
           // passwords, a beep if a correct password.
-          if (lock_tries > 2) {
+          if (lock_tries > ALARM_ATTEMPTS) {
             play_alarm(0);
           } else {
             play_beep(0);
@@ -659,7 +661,7 @@ readpw(Display *dpy, const char *pws)
         // Take a webcam shot of whoever
         // is tampering with our machine.
         webcam_shot(0);
-
+        syslog(LOG_WARNING, "Failed unlock attempt");
         // Upload our image:
         char *link, *hash;
         int success = imgur_upload(&link, &hash);
