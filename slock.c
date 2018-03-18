@@ -468,7 +468,7 @@ play_beep(int async) {
   int r = snprintf(
     cmd,
     CMD_LENGTH,
-    "aplay %s/slock/beep.wav 2> /dev/null%s",
+    "aplay %s/.config/slock/beep.wav 2> /dev/null%s",
     getenv("HOME"),
     async ? " &" : ""
   );
