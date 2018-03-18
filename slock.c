@@ -490,7 +490,7 @@ play_alarm(int async) {
   int r = snprintf(
     cmd,
     CMD_LENGTH,
-    "aplay %s/slock/police.wav 2> /dev/null%s",
+    "aplay %s/.config/slock/police.wav 2> /dev/null%s",
     getenv("HOME"),
     async ? " &" : ""
   );

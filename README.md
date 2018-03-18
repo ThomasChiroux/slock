@@ -12,6 +12,8 @@ for me to use.
 - Alarms: A siren will play if a user enters an incorrect password. It must
   reside in ~/.config/slock/
 
+- notify you of failed attempts after unlocking
+
 - Automatic Shutdown: Your machine will immediately shutdown if:
 
   1. The wrong password is entered more than 5 times.
